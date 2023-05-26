@@ -1,32 +1,3 @@
-# -*- coding:utf-8  -*-
-# Time  : 2021/5/31 下午4:14
-# Author: Yahui Cui
-
-"""
-# =================================== Important =========================================
-Notes:
-1. this agent is random agent , which can fit any env in Jidi platform.
-2. if you want to load .pth file, please follow the instruction here:
-https://github.com/jidiai/ai_lib/blob/master/examples/demo
-"""
-
-import os
-from rl_trainer.algo.ppo import PPO
-
-
-def my_controller(observation, action_space, is_act_continuous=False):
-
-    model = PPO()
-    load_dir = 'olympics-integrated/run5'
-    model.load(load_dir, episode=20)
-
-    agent_action = []
-    for i in range(len(action_space)):
-        action_ = model.select_action(observation['obs']['agent_obs'].flatten(), False)
-        agent_action.append(action_)
-    return agent_action
-
-
 def sample_single_dim(action_space_list_each, is_act_continuous):
     each = []
     if is_act_continuous:

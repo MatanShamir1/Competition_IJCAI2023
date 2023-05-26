@@ -161,7 +161,7 @@ class PPO:
         print("run_dir: ", run_dir)
         base_path = os.path.dirname(os.path.dirname(__file__))
         print("base_path: ", base_path)
-        algo_path = os.path.join(base_path, 'models/ppo')
+        algo_path = os.path.join(base_path, 'models')
         run_path = os.path.join(algo_path, run_dir)
         run_path = os.path.join(run_path, 'trained_model')
         model_actor_path = os.path.join(run_path, "actor_" + str(episode) + ".pth")

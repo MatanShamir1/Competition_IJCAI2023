@@ -28,13 +28,13 @@ from rl_trainer.algo.random import random_agent
 parser = argparse.ArgumentParser()
 parser.add_argument('--game_name', default="olympics-integrated", type=str)
 parser.add_argument('--algo', default="ppo", type=str, help="ppo/sac")
-parser.add_argument('--max_episodes', default=1500, type=int)
+parser.add_argument('--max_episodes', default=20, type=int)
 parser.add_argument('--episode_length', default=500, type=int)
 parser.add_argument('--map', default=1, type = int)
 
 parser.add_argument('--seed', default=1, type=int)
 
-parser.add_argument("--save_interval", default=100, type=int)
+parser.add_argument("--save_interval", default=10, type=int)
 parser.add_argument("--model_episode", default=0, type=int)
 
 parser.add_argument("--load_model", action='store_true')
@@ -177,13 +177,10 @@ def main(args):
             model.save(run_dir, episode)
 
 
-
-
-
 if __name__ == '__main__':
     args = parser.parse_args()
-    #args.load_model = True
-    #args.load_run = 3
-    #args.map = 3
-    #args.load_episode= 900
+    args.load_model = False
+    args.load_run = 3
+    args.map = 3
+    args.load_episode = 900
     main(args)
