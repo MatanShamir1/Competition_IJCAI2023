@@ -145,7 +145,7 @@ def main(args):
             action_opponent = opponent_agent.act(obs_oppo_agent)        #opponent action
             # action_opponent = [0,0]  #here we assume the opponent is not moving in the demo
 
-            action_ctrl_raw, action_prob= model.select_action(obs_ctrl_agent, False if args.load_model else True)
+            action_ctrl_raw, action_prob= model.select_action(obs_ctrl_agent, True)
             #inference
             action_ctrl = actions_map[action_ctrl_raw]
 
