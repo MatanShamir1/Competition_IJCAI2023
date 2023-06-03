@@ -32,17 +32,17 @@ from olympics_engine.agent import *
 parser = argparse.ArgumentParser()
 parser.add_argument('--game_name', default="table-hockey", type=str, help='running-competition/table-hockey/football/wrestling')
 parser.add_argument('--algo', default="ppo", type=str, help="ppo/sac")
-parser.add_argument('--max_episodes', default=100000, type=int)
+parser.add_argument('--max_episodes', default=20, type=int)
 parser.add_argument('--episode_length', default=500, type=int)
 
 parser.add_argument('--seed', default=1, type=int)
 
-parser.add_argument("--save_interval", default=1000, type=int)
+parser.add_argument("--save_interval", default=10, type=int)
 parser.add_argument("--model_episode", default=0, type=int)
 
 parser.add_argument("--load_model", action='store_true')
-parser.add_argument("--load_run", default=2, type=int)
-parser.add_argument("--load_episode", default=900, type=int)
+parser.add_argument("--load_run", default=8, type=int)
+parser.add_argument("--load_episode", default=20, type=int)
 
 
 device = 'cuda'
@@ -142,7 +142,7 @@ def main(args):
 
         while True:
             action_opponent = opponent_agent.act(obs_oppo_agent)        #opponent action
-            action_opponent = [0,0]  #here we assume the opponent is not moving in the demo
+            # action_opponent = [0,0]  #here we assume the opponent is not moving in the demo
 
             action_ctrl_raw, action_prob= model.select_action(obs_ctrl_agent, False if args.load_model else True)
             #inference

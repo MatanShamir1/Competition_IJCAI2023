@@ -1,5 +1,5 @@
 # -*- coding:utf-8  -*-
-# Time  : 2023/5/20 下午4:14
+# Time  : 2023/5/20
 # Authors: Osher Elhadad, Matan Shamir, Gili Gutfeld
 
 """
@@ -16,8 +16,8 @@ import sys
 def my_controller(observation, action_space, is_act_continuous=False):
 
     model = PPO()
-    load_dir = 'run5'
-    load_model(model, load_dir, 'OMG', episode=20)
+    load_dir = 'run10'
+    load_model(model, load_dir, 'OMG', episode=160)
 
     agent_action = []
     for i in range(len(action_space)):
