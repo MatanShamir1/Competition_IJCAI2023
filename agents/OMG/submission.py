@@ -16,8 +16,8 @@ import sys
 def my_controller(observation, action_space, is_act_continuous=False):
 
     model = PPO()
-    load_dir = 'run10'
-    load_model(model, load_dir, 'OMG', episode=160)
+    load_dir = 'run11'
+    load_model(model, load_dir, 'OMG', episode=450)
 
     agent_action = []
     for i in range(len(action_space)):

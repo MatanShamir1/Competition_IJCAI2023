@@ -28,13 +28,13 @@ from rl_trainer.algo.random import random_agent
 parser = argparse.ArgumentParser()
 parser.add_argument('--game_name', default="olympics-integrated", type=str)
 parser.add_argument('--algo', default="ppo", type=str, help="ppo/sac")
-parser.add_argument('--max_episodes', default=10000, type=int)
-parser.add_argument('--episode_length', default=1000, type=int)
+parser.add_argument('--max_episodes', default=20, type=int)
+parser.add_argument('--episode_length', default=5000, type=int)
 parser.add_argument('--map', default=1, type = int)
 
 parser.add_argument('--seed', default=1, type=int)
 
-parser.add_argument("--save_interval", default=50, type=int)
+parser.add_argument("--save_interval", default=20, type=int)
 parser.add_argument("--model_episode", default=0, type=int)
 
 parser.add_argument("--load_model", action='store_true')
@@ -43,7 +43,7 @@ parser.add_argument("--load_episode", default=900, type=int)
 
 
 device = 'cpu'
-RENDER = False
+RENDER = True
 actions_map = {0: [-100, -30], 1: [-100, -18], 2: [-100, -6], 3: [-100, 6], 4: [-100, 18], 5: [-100, 30], 6: [-40, -30],
                7: [-40, -18], 8: [-40, -6], 9: [-40, 6], 10: [-40, 18], 11: [-40, 30], 12: [20, -30], 13: [20, -18],
                14: [20, -6], 15: [20, 6], 16: [20, 18], 17: [20, 30], 18: [80, -30], 19: [80, -18], 20: [80, -6],

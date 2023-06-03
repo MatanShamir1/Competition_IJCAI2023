@@ -32,21 +32,21 @@ from olympics_engine.agent import *
 parser = argparse.ArgumentParser()
 parser.add_argument('--game_name', default="table-hockey", type=str, help='running-competition/table-hockey/football/wrestling')
 parser.add_argument('--algo', default="ppo", type=str, help="ppo/sac")
-parser.add_argument('--max_episodes', default=20, type=int)
-parser.add_argument('--episode_length', default=500, type=int)
+parser.add_argument('--max_episodes', default=10000, type=int)
+parser.add_argument('--episode_length', default=20000, type=int)
 
 parser.add_argument('--seed', default=1, type=int)
 
-parser.add_argument("--save_interval", default=10, type=int)
+parser.add_argument("--save_interval", default=100, type=int)
 parser.add_argument("--model_episode", default=0, type=int)
 
 parser.add_argument("--load_model", action='store_true')
-parser.add_argument("--load_run", default=8, type=int)
-parser.add_argument("--load_episode", default=20, type=int)
+parser.add_argument("--load_run", default=5, type=int)
+parser.add_argument("--load_episode", default=100, type=int)
 
 
 device = 'cuda'
-RENDER = True
+RENDER = False
 actions_map = {0: [-100, -30], 1: [-100, -18], 2: [-100, -6], 3: [-100, 6], 4: [-100, 18], 5: [-100, 30], 6: [-40, -30],
                7: [-40, -18], 8: [-40, -6], 9: [-40, 6], 10: [-40, 18], 11: [-40, 30], 12: [20, -30], 13: [20, -18],
                14: [20, -6], 15: [20, 6], 16: [20, 18], 17: [20, 30], 18: [80, -30], 19: [80, -18], 20: [80, -6],
@@ -104,25 +104,26 @@ def main(args):
     torch.manual_seed(args.seed)
     # 定义保存路径
     run_dir, log_dir = make_logpath(args.game_name, args.algo)
-    if not args.load_model:
-        writer = SummaryWriter(os.path.join(str(log_dir), "{}_{} on subgames {}".format(
-            datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),args.algo, args.game_name)))
-        save_config(args, log_dir)
+    #if not args.load_model:
+    writer = SummaryWriter(os.path.join(str(log_dir), "{}_{} on subgames {}".format(
+        datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),args.algo, args.game_name)))
+    save_config(args, log_dir)
 
     record_win = deque(maxlen=100)
     record_win_op = deque(maxlen=100)
 
     if args.load_model:
         model = PPO()
+        print(f'IM LOADING THE MODEL FROM {args.load_run}!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
         load_dir = os.path.join(os.path.dirname(run_dir), "run" + str(args.load_run))
         model.load(load_dir,episode=args.load_episode)
     else:
         model = PPO(run_dir)
-        Transition = namedtuple('Transition', ['state', 'action', 'a_log_prob', 'reward', 'next_state', 'done'])
+    Transition = namedtuple('Transition', ['state', 'action', 'a_log_prob', 'reward', 'next_state', 'done'])
 
     opponent_agent = random_agent()     #we use random opponent agent here
 
-    episode = 0
+    episode = args.model_episode
     train_count = 0
 
     while episode < args.max_episodes:
@@ -169,10 +170,10 @@ def main(args):
                 else:
                     post_reward=[0, 0]
 
-            if not args.load_model:
-                trans = Transition(obs_ctrl_agent, action_ctrl_raw, action_prob, post_reward[ctrl_agent_index],
-                                   next_obs_ctrl_agent, done)
-                model.store_transition(trans)
+            #if not args.load_model:
+            trans = Transition(obs_ctrl_agent, action_ctrl_raw, action_prob, post_reward[ctrl_agent_index],
+                               next_obs_ctrl_agent, done)
+            model.store_transition(trans)
 
             obs_oppo_agent, energy_oppo_agent = next_obs_oppo_agent, next_energy_oppo_agent
             obs_ctrl_agent, energy_ctrl_agent = np.array(next_obs_ctrl_agent).flatten(), next_energy_ctrl_agent
@@ -190,18 +191,20 @@ def main(args):
                       "; win rate(controlled & opponent): ", '%.2f' % (sum(record_win)/len(record_win)),
                       '%.2f' % (sum(record_win_op)/len(record_win_op)), '; Trained episode:', train_count)
 
-                if not args.load_model:
-                    if args.algo == 'ppo' and len(model.buffer) >= model.batch_size:
-                        if win_is == 1:
-                            model.update(episode)
-                            train_count += 1
-                        else:
-                            model.clear_buffer()
+                #if not args.load_model:
+                if args.algo == 'ppo' and len(model.buffer) >= model.batch_size:
+                    if win_is == 1:
+                        print('IM LEARNING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+                        model.update(episode)
+                        train_count += 1
+                    else:
+                        model.clear_buffer()
 
-                    writer.add_scalar('training Gt', Gt, episode)
+                writer.add_scalar('training Gt', Gt, episode)
 
                 break
-        if episode % args.save_interval == 0 and not args.load_model:
+        #if episode % args.save_interval == 0 and not args.load_model:
+        if episode % args.save_interval == 0:
             model.save(run_dir, episode)
 
 
