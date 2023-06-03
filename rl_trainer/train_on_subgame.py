@@ -70,7 +70,7 @@ def main(args):
     elif args.game_name == 'table-hockey':
         Gamemap = create_scenario(args.game_name)
         env = table_hockey(Gamemap)
-        env.max_step = 400
+        env.max_step = 3000
     elif args.game_name == 'football':
         Gamemap = create_scenario(args.game_name)
         env = football(Gamemap)
@@ -166,9 +166,9 @@ def main(args):
                 post_reward = [0, 0]
             else:
                 if reward[0] != reward[1]:
-                    post_reward = [reward[0]-100, reward[1]] if reward[0]<reward[1] else [reward[0], reward[1]-100]
+                    post_reward = [reward[0]-1000, reward[1]+999] if reward[0]<reward[1] else [reward[0]+999, reward[1]-1000]
                 else:
-                    post_reward=[0, 0]
+                    post_reward=[-500, -500]
 
             #if not args.load_model:
             trans = Transition(obs_ctrl_agent, action_ctrl_raw, action_prob, post_reward[ctrl_agent_index],
@@ -193,12 +193,12 @@ def main(args):
 
                 #if not args.load_model:
                 if args.algo == 'ppo' and len(model.buffer) >= model.batch_size:
-                    if win_is == 1:
-                        print('IM LEARNING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-                        model.update(episode)
-                        train_count += 1
-                    else:
-                        model.clear_buffer()
+                    # if win_is == 1:
+                    print('IM LEARNING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+                    model.update(episode)
+                    train_count += 1
+                    # else:
+                    #     model.clear_buffer()
 
                 writer.add_scalar('training Gt', Gt, episode)
 

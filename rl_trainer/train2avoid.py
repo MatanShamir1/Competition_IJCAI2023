@@ -40,9 +40,9 @@ import time
 
 gamemap = {'objects':[], 'agents':[]}
 
-gamemap['objects'].append(Wall(init_pos=[[50, 250], [650, 250]], length = None, color = 'black'))
-gamemap['objects'].append(Wall(init_pos=[[50, 450], [650, 450]], length = None, color = 'black'))
-gamemap['objects'].append(Wall(init_pos=[[50, 250], [50, 450]], length = None, color = 'black'))
+gamemap['objects'].append(Cross(init_pos=[[50, 250], [650, 250]], length = None, color = 'green', width = 5))
+gamemap['objects'].append(Cross(init_pos=[[50, 450], [650, 450]], length = None, color = 'green', width = 5))
+gamemap['objects'].append(Cross(init_pos=[[50, 250], [50, 450]], length = None, color = 'green', width = 5))
 
 gamemap['objects'].append(Cross(init_pos=[[650, 250], [650, 450]], length = None, color = 'red', width = 5))
 gamemap['objects'].append(Cross(init_pos=[[200, 250], [200, 300]], length = None, color = 'green', width = 5))
@@ -83,7 +83,7 @@ class env_test(OlympicsBase):
         self.wall_restitution = 0.5
         self.print_log = False
         self.tau = 0.1
-        self.max_step = 300
+        self.max_step = 2000
 
         self.draw_obs = True
         self.show_traj = False
@@ -252,7 +252,7 @@ class env_test(OlympicsBase):
 parser = argparse.ArgumentParser()
 parser.add_argument('--game_name', default="Learn2Avoid", type=str, help='running-competition/table-hockey/football/wrestling')
 parser.add_argument('--algo', default="ppo", type=str, help="ppo/sac")
-parser.add_argument('--max_episodes', default=1500, type=int)
+parser.add_argument('--max_episodes', default=2000, type=int)
 parser.add_argument('--episode_length', default=500, type=int)
 
 parser.add_argument('--seed', default=1, type=int)
@@ -262,7 +262,7 @@ parser.add_argument("--model_episode", default=0, type=int)
 
 parser.add_argument("--load_model", action='store_true')
 parser.add_argument("--load_run", default=2, type=int)
-parser.add_argument("--load_episode", default=900, type=int)
+parser.add_argument("--load_episode", default=50, type=int)
 
 
 device = 'cpu'
