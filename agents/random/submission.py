@@ -10,19 +10,11 @@ Notes:
 https://github.com/jidiai/ai_lib/blob/master/examples/demo
 """
 
-import os
-from rl_trainer.algo.ppo import PPO
-
 
 def my_controller(observation, action_space, is_act_continuous=False):
-
-    model = PPO()
-    load_dir = 'olympics-integrated/run5'
-    model.load(load_dir, episode=20)
-
     agent_action = []
     for i in range(len(action_space)):
-        action_ = model.select_action(observation['obs']['agent_obs'].flatten(), False)
+        action_ = sample_single_dim(action_space[i], is_act_continuous)
         agent_action.append(action_)
     return agent_action
 

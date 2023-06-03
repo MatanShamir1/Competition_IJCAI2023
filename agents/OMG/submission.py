@@ -1,73 +1,50 @@
 # -*- coding:utf-8  -*-
-# Time  : 2021/5/31 下午4:14
-# Author: Yahui Cui
+# Time  : 2023/5/20 下午4:14
+# Authors: Osher Elhadad, Matan Shamir, Gili Gutfeld
 
 """
 # =================================== Important =========================================
-Notes:
-1. this agent is random agent , which can fit any env in Jidi platform.
-2. if you want to load .pth file, please follow the instruction here:
-https://github.com/jidiai/ai_lib/blob/master/examples/demo
+this agent is a pretrained PPO agent , which can fit any env in Jidi platform.
 """
+
+import os
+from rl_trainer.algo.ppo import PPO, device
+import torch
+import sys
 
 
 def my_controller(observation, action_space, is_act_continuous=False):
+
+    model = PPO()
+    load_dir = 'run5'
+    load_model(model, load_dir, 'OMG', episode=20)
+
     agent_action = []
     for i in range(len(action_space)):
-        action_ = sample_single_dim(action_space[i], is_act_continuous)
+        action_ = model.select_action(observation['obs']['agent_obs'].flatten(), False)
         agent_action.append(action_)
     return agent_action
 
 
-def sample_single_dim(action_space_list_each, is_act_continuous):
-    each = []
-    if is_act_continuous:
-        each = action_space_list_each.sample()
+def load_model(model, run_dir, agent, episode):
+    print(f'\nBegin to load model: ')
+    print("run_dir: ", run_dir)
+    base_path = os.path.dirname(os.path.dirname(__file__))
+    print("base_path: ", base_path)
+    agent_path = os.path.join(base_path, agent)
+    algo_path = os.path.join(agent_path, 'models')
+    run_path = os.path.join(algo_path, run_dir)
+    run_path = os.path.join(run_path, 'trained_model')
+    model_actor_path = os.path.join(run_path, "actor_" + str(episode) + ".pth")
+    model_critic_path = os.path.join(run_path, "critic_" + str(episode) + ".pth")
+    print(f'Actor path: {model_actor_path}')
+    print(f'Critic path: {model_critic_path}')
+
+    if os.path.exists(model_critic_path) and os.path.exists(model_actor_path):
+        actor = torch.load(model_actor_path, map_location=device)
+        critic = torch.load(model_critic_path, map_location=device)
+        model.actor_net.load_state_dict(actor)
+        model.critic_net.load_state_dict(critic)
+        print("Model loaded!")
     else:
-        if action_space_list_each.__class__.__name__ == "Discrete":
-            each = [0] * action_space_list_each.n
-            idx = action_space_list_each.sample()
-            each[idx] = 1
-        elif action_space_list_each.__class__.__name__ == "MultiDiscreteParticle":
-            each = []
-            nvec = action_space_list_each.high - action_space_list_each.low + 1
-            sample_indexes = action_space_list_each.sample()
-
-            for i in range(len(nvec)):
-                dim = nvec[i]
-                new_action = [0] * dim
-                index = sample_indexes[i]
-                new_action[index] = 1
-                each.extend(new_action)
-    return each
-
-
-def sample(action_space_list_each, is_act_continuous):
-    player = []
-    if is_act_continuous:
-        for j in range(len(action_space_list_each)):
-            each = action_space_list_each[j].sample()
-            player.append(each)
-    else:
-        player = []
-        for j in range(len(action_space_list_each)):
-            # each = [0] * action_space_list_each[j]
-            # idx = np.random.randint(action_space_list_each[j])
-            if action_space_list_each[j].__class__.__name__ == "Discrete":
-                each = [0] * action_space_list_each[j].n
-                idx = action_space_list_each[j].sample()
-                each[idx] = 1
-                player.append(each)
-            elif action_space_list_each[j].__class__.__name__ == "MultiDiscreteParticle":
-                each = []
-                nvec = action_space_list_each[j].high
-                sample_indexes = action_space_list_each[j].sample()
-
-                for i in range(len(nvec)):
-                    dim = nvec[i] + 1
-                    new_action = [0] * dim
-                    index = sample_indexes[i]
-                    new_action[index] = 1
-                    each.extend(new_action)
-                player.append(each)
-    return player
+        sys.exit(f'Model not founded!')
