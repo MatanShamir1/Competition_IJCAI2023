@@ -164,6 +164,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--my_ai", default="OMG", help="OMG")
+    # parser.add_argument("--my_ai", default="random", help="random")
     parser.add_argument("--opponent", default="random", help="random")
     args = parser.parse_args()
 

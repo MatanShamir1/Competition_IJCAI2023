@@ -12,6 +12,12 @@ from rl_trainer.algo.ppo import PPO, device
 import torch
 import sys
 
+actions_map = {0: [-100, -30], 1: [-100, -18], 2: [-100, -6], 3: [-100, 6], 4: [-100, 18], 5: [-100, 30], 6: [-40, -30],
+               7: [-40, -18], 8: [-40, -6], 9: [-40, 6], 10: [-40, 18], 11: [-40, 30], 12: [20, -30], 13: [20, -18],
+               14: [20, -6], 15: [20, 6], 16: [20, 18], 17: [20, 30], 18: [80, -30], 19: [80, -18], 20: [80, -6],
+               21: [80, 6], 22: [80, 18], 23: [80, 30], 24: [140, -30], 25: [140, -18], 26: [140, -6], 27: [140, 6],
+               28: [140, 18], 29: [140, 30], 30: [200, -30], 31: [200, -18], 32: [200, -6], 33: [200, 6], 34: [200, 18],
+               35: [200, 30]}
 
 def my_controller(observation, action_space, is_act_continuous=False):
 
@@ -19,11 +25,9 @@ def my_controller(observation, action_space, is_act_continuous=False):
     load_dir = 'run3'
     load_model(model, load_dir, 'OMG', episode=2000)
 
-    agent_action = []
-    for i in range(len(action_space)):
-        action_ = model.select_action(observation['obs']['agent_obs'].flatten(), False)
-        agent_action.append(action_)
-    return agent_action
+    action_ctrl_raw, action_prob = model.select_action(observation['obs']['agent_obs'].flatten(), False)
+    action_ctrl = actions_map[action_ctrl_raw]
+    return [[action] for action in action_ctrl]
 
 
 def load_model(model, run_dir, agent, episode):
