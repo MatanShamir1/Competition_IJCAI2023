@@ -1,0 +1,10 @@
+algo: ppo
+episode_length: 20000
+game_name: running-competition
+load_episode: 400
+load_model: true
+load_run: 6
+max_episodes: 30000
+model_episode: 0
+save_interval: 100
+seed: 1
