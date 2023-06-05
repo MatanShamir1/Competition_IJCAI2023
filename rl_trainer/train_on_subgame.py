@@ -30,9 +30,9 @@ from olympics_engine.agent import *
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--game_name', default="table-hockey", type=str, help='running-competition/table-hockey/football/wrestling')
+parser.add_argument('--game_name', default="football", type=str, help='running-competition/table-hockey/football/wrestling')
 parser.add_argument('--algo', default="ppo", type=str, help="ppo/sac")
-parser.add_argument('--max_episodes', default=10000, type=int)
+parser.add_argument('--max_episodes', default=30000, type=int)
 parser.add_argument('--episode_length', default=20000, type=int)
 
 parser.add_argument('--seed', default=1, type=int)
@@ -41,8 +41,8 @@ parser.add_argument("--save_interval", default=100, type=int)
 parser.add_argument("--model_episode", default=0, type=int)
 
 parser.add_argument("--load_model", action='store_true')
-parser.add_argument("--load_run", default=5, type=int)
-parser.add_argument("--load_episode", default=100, type=int)
+parser.add_argument("--load_run", default=8, type=int)
+parser.add_argument("--load_episode", default=400, type=int)
 
 
 device = 'cuda'
@@ -59,14 +59,13 @@ def main(args):
     num_agents = 2
     ctrl_agent_index = 0        #controlled agent index
 
-
     if args.game_name == 'running-competition':
         map_id = random.randint(1,4)
         # map_id = 3
         Gamemap = create_scenario(args.game_name)
         env = Running_competition(meta_map=Gamemap,map_id=map_id, vis = 200, vis_clear=5, agent1_color = 'light red',
                                    agent2_color = 'blue')
-        env.max_step = 400
+        env.max_step = 3000
     elif args.game_name == 'table-hockey':
         Gamemap = create_scenario(args.game_name)
         env = table_hockey(Gamemap)
@@ -74,14 +73,13 @@ def main(args):
     elif args.game_name == 'football':
         Gamemap = create_scenario(args.game_name)
         env = football(Gamemap)
-        env.max_step = 400
+        env.max_step = 3000
     elif args.game_name == 'wrestling':
         Gamemap = create_scenario(args.game_name)
         env = wrestling(Gamemap)
         env.max_step = 400
     else:
         raise NotImplementedError
-
 
     print(f'Playing game {args.game_name}')
     print("==algo: ", args.algo)
@@ -91,7 +89,6 @@ def main(args):
 
     print(f'Total agent number: {num_agents}')
     print(f'Agent control by the actor: {ctrl_agent_index}')
-
 
     width = env.view_setting['width']+2*env.view_setting['edge']
     height = env.view_setting['height']+2*env.view_setting['edge']
@@ -142,8 +139,8 @@ def main(args):
         Gt = 0
 
         while True:
-            action_opponent = opponent_agent.act(obs_oppo_agent)        #opponent action
-            # action_opponent = [0,0]  #here we assume the opponent is not moving in the demo
+            # action_opponent = opponent_agent.act(obs_oppo_agent)        #opponent action
+            action_opponent = [0, 0]  #here we assume the opponent is not moving in the demo
 
             action_ctrl_raw, action_prob= model.select_action(obs_ctrl_agent, True)
             #inference
@@ -206,9 +203,6 @@ def main(args):
         #if episode % args.save_interval == 0 and not args.load_model:
         if episode % args.save_interval == 0:
             model.save(run_dir, episode)
-
-
-
 
 
 if __name__ == '__main__':
