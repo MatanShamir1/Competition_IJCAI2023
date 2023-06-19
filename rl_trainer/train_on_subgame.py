@@ -41,8 +41,8 @@ parser.add_argument("--save_interval", default=100, type=int)
 parser.add_argument("--model_episode", default=0, type=int)
 
 parser.add_argument("--load_model", action='store_true')
-parser.add_argument("--load_run", default=8, type=int)
-parser.add_argument("--load_episode", default=400, type=int)
+parser.add_argument("--load_run", default=33, type=int)
+parser.add_argument("--load_episode", default=200, type=int)
 
 
 device = 'cuda'
@@ -118,7 +118,10 @@ def main(args):
         model = PPO(run_dir)
     Transition = namedtuple('Transition', ['state', 'action', 'a_log_prob', 'reward', 'next_state', 'done'])
 
-    opponent_agent = random_agent()     #we use random opponent agent here
+    # opponent_agent = random_agent()     #we use random opponent agent here
+    opp_model = PPO()
+    load_dir = os.path.join(os.path.dirname(run_dir), "run" + str(args.load_run))
+    opp_model.load(load_dir, episode=args.load_episode)
 
     episode = args.model_episode
     train_count = 0
@@ -129,18 +132,20 @@ def main(args):
             env.render()
         if isinstance(state[ctrl_agent_index], type({})):
             obs_ctrl_agent, energy_ctrl_agent = state[ctrl_agent_index]['agent_obs'].flatten(), env.agent_list[ctrl_agent_index].energy
-            obs_oppo_agent, energy_oppo_agent = state[1-ctrl_agent_index]['agent_obs'], env.agent_list[1-ctrl_agent_index].energy
+            obs_oppo_agent, energy_oppo_agent = state[1-ctrl_agent_index]['agent_obs'].flatten(), env.agent_list[1-ctrl_agent_index].energy
         else:
             obs_ctrl_agent, energy_ctrl_agent = state[ctrl_agent_index].flatten(), env.agent_list[ctrl_agent_index].energy
-            obs_oppo_agent, energy_oppo_agent = state[1-ctrl_agent_index], env.agent_list[1-ctrl_agent_index].energy
+            obs_oppo_agent, energy_oppo_agent = state[1-ctrl_agent_index].flatten(), env.agent_list[1-ctrl_agent_index].energy
 
         episode += 1
         step = 0
         Gt = 0
 
         while True:
-            # action_opponent = opponent_agent.act(obs_oppo_agent)        #opponent action
-            action_opponent = [0, 0]  #here we assume the opponent is not moving in the demo
+            #action_opponent = opponent_agent.act(obs_oppo_agent)        #opponent action
+            #action_opponent = [0, 0]  #here we assume the opponent is not moving in the demo
+            action_opp_raw, action_opp_prob = opp_model.select_action(obs_oppo_agent, False)
+            action_opponent = actions_map[action_opp_raw]
 
             action_ctrl_raw, action_prob= model.select_action(obs_ctrl_agent, True)
             #inference
@@ -172,7 +177,8 @@ def main(args):
                                next_obs_ctrl_agent, done)
             model.store_transition(trans)
 
-            obs_oppo_agent, energy_oppo_agent = next_obs_oppo_agent, next_energy_oppo_agent
+            # obs_oppo_agent, energy_oppo_agent = next_obs_oppo_agent, next_energy_oppo_agent
+            obs_oppo_agent, energy_oppo_agent = np.array(next_obs_oppo_agent).flatten(), next_energy_oppo_agent
             obs_ctrl_agent, energy_ctrl_agent = np.array(next_obs_ctrl_agent).flatten(), next_energy_ctrl_agent
 
             if RENDER:
@@ -191,7 +197,6 @@ def main(args):
                 #if not args.load_model:
                 if args.algo == 'ppo' and len(model.buffer) >= model.batch_size:
                     # if win_is == 1:
-                    print('IM LEARNING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
                     model.update(episode)
                     train_count += 1
                     # else:
@@ -203,6 +208,10 @@ def main(args):
         #if episode % args.save_interval == 0 and not args.load_model:
         if episode % args.save_interval == 0:
             model.save(run_dir, episode)
+            if (sum(record_win) / len(record_win)) >= 0.6:
+                opp_model = PPO()
+                load_dir = os.path.join(os.path.dirname(run_dir), "run" + str(36))
+                opp_model.load(load_dir, episode=episode)
 
 
 if __name__ == '__main__':
