@@ -264,7 +264,7 @@ parser.add_argument("--load_episode", default=50, type=int)
 
 
 device = 'cpu'
-RENDER = False
+RENDER = True
 actions_map = {0: [-100, -30], 1: [-100, -18], 2: [-100, -6], 3: [-100, 6], 4: [-100, 18], 5: [-100, 30], 6: [-40, -30],
                7: [-40, -18], 8: [-40, -6], 9: [-40, 6], 10: [-40, 18], 11: [-40, 30], 12: [20, -30], 13: [20, -18],
                14: [20, -6], 15: [20, 6], 16: [20, 18], 17: [20, 30], 18: [80, -30], 19: [80, -18], 20: [80, -6],
@@ -387,6 +387,7 @@ def main(args):
             # if not done:
                 # post_reward = [-1., -1.]
             post_reward = reward
+            print(post_reward[ctrl_agent_index])
             # else:
                 # if reward[0] != reward[1]:
                 #     post_reward = [reward[0]-100, reward[1]] if reward[0]<reward[1] else [reward[0], reward[1]-100]

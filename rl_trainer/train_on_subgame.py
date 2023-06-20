@@ -30,19 +30,19 @@ from olympics_engine.agent import *
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--game_name', default="football", type=str, help='running-competition/table-hockey/football/wrestling')
+parser.add_argument('--game_name', default="running-competition", type=str, help='running-competition/table-hockey/football/wrestling')
 parser.add_argument('--algo', default="ppo", type=str, help="ppo/sac")
-parser.add_argument('--max_episodes', default=30000, type=int)
+parser.add_argument('--max_episodes', default=50000, type=int)
 parser.add_argument('--episode_length', default=20000, type=int)
 
 parser.add_argument('--seed', default=1, type=int)
 
-parser.add_argument("--save_interval", default=100, type=int)
+parser.add_argument("--save_interval", default=30, type=int)
 parser.add_argument("--model_episode", default=0, type=int)
 
 parser.add_argument("--load_model", action='store_true')
-parser.add_argument("--load_run", default=33, type=int)
-parser.add_argument("--load_episode", default=200, type=int)
+parser.add_argument("--load_run", default=40, type=int)
+parser.add_argument("--load_episode", default=150, type=int)
 
 
 device = 'cuda'
@@ -65,7 +65,7 @@ def main(args):
         Gamemap = create_scenario(args.game_name)
         env = Running_competition(meta_map=Gamemap,map_id=map_id, vis = 200, vis_clear=5, agent1_color = 'light red',
                                    agent2_color = 'blue')
-        env.max_step = 3000
+        env.max_step = 500
     elif args.game_name == 'table-hockey':
         Gamemap = create_scenario(args.game_name)
         env = table_hockey(Gamemap)
@@ -142,12 +142,12 @@ def main(args):
         Gt = 0
 
         while True:
-            #action_opponent = opponent_agent.act(obs_oppo_agent)        #opponent action
+            # action_opponent = opponent_agent.act(obs_oppo_agent)        #opponent action
             #action_opponent = [0, 0]  #here we assume the opponent is not moving in the demo
             action_opp_raw, action_opp_prob = opp_model.select_action(obs_oppo_agent, False)
             action_opponent = actions_map[action_opp_raw]
 
-            action_ctrl_raw, action_prob= model.select_action(obs_ctrl_agent, True)
+            action_ctrl_raw, action_prob = model.select_action(obs_ctrl_agent, True)
             #inference
             action_ctrl = actions_map[action_ctrl_raw]
 
@@ -163,14 +163,22 @@ def main(args):
                 next_obs_oppo_agent, next_energy_oppo_agent = next_state[1-ctrl_agent_index], env.agent_list[1-ctrl_agent_index].energy
 
             step += 1
-
-            if not done:
-                post_reward = [0, 0]
-            else:
-                if reward[0] != reward[1]:
-                    post_reward = [reward[0]-1000, reward[1]+999] if reward[0]<reward[1] else [reward[0]+999, reward[1]-1000]
+            if args.game_name == 'running-competition':
+                if not done:
+                    post_reward = [0, 0]
                 else:
-                    post_reward=[-500, -500]
+                    if reward[0] != reward[1]:
+                        post_reward = [reward[0] - 10 + (9 * float(step)) / (float(env.max_step)), reward[1]] if reward[0] < reward[1] else [reward[0] + 9 - (9 * float(step)) / (float(env.max_step) * 2), reward[1] - 1]
+                    else:
+                        post_reward = [-1, 0]
+            elif args.game_name == 'wrestling':
+                if not done:
+                    post_reward = [0, 0]
+                else:
+                    if reward[0] != reward[1]:
+                        post_reward = [reward[0] - 10 + (9 * float(step)) / (float(env.max_step)), reward[1]] if reward[0] < reward[1] else [reward[0] + 9 - (9 * float(step)) / (float(env.max_step) * 3), reward[1] - 1]
+                    else:
+                        post_reward = [-1, 0]
 
             #if not args.load_model:
             trans = Transition(obs_ctrl_agent, action_ctrl_raw, action_prob, post_reward[ctrl_agent_index],
@@ -197,6 +205,7 @@ def main(args):
                 #if not args.load_model:
                 if args.algo == 'ppo' and len(model.buffer) >= model.batch_size:
                     # if win_is == 1:
+                    print(f'reward {post_reward}')
                     model.update(episode)
                     train_count += 1
                     # else:
@@ -210,7 +219,7 @@ def main(args):
             model.save(run_dir, episode)
             if (sum(record_win) / len(record_win)) >= 0.6:
                 opp_model = PPO()
-                load_dir = os.path.join(os.path.dirname(run_dir), "run" + str(36))
+                load_dir = os.path.join(os.path.dirname(run_dir), "run" + str(41))
                 opp_model.load(load_dir, episode=episode)
 
 
