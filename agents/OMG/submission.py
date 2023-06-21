@@ -258,10 +258,8 @@ class PPO:
         state = torch.tensor([t.state for t in self.buffer], dtype=torch.float).to(device)
         action = torch.tensor([t.action for t in self.buffer], dtype=torch.long).view(-1, 1).to(device)
         reward = [t.reward for t in self.buffer]
-        # update: don't need next_state
-        # reward = torch.tensor([t.reward for t in self.buffer], dtype=torch.float).view(-1, 1)
-        # next_state = torch.tensor([t.next_state for t in self.buffer], dtype=torch.float)
-        old_action_log_prob = torch.tensor([t.a_log_prob for t in self.buffer], dtype=torch.float).view(-1, 1).to(device)
+        old_action_log_prob = torch.tensor([t.a_log_prob for t in self.buffer], dtype=torch.float).view(-1, 1).to(
+            device)
 
         R = 0
         Gt = []
@@ -269,45 +267,46 @@ class PPO:
             R = r + self.gamma * R
             Gt.insert(0, R)
         Gt = torch.tensor(Gt, dtype=torch.float).to(device)
-        # print("The agent is updateing....")
+
         for i in range(self.ppo_update_time):
             for index in BatchSampler(SubsetRandomSampler(range(len(self.buffer))), self.batch_size, False):
-                # if self.training_step % 1000 == 0:
-                #     print('I_ep {} ，train {} times'.format(i_ep, self.training_step))
-                # with torch.no_grad():
                 Gt_index = Gt[index].view(-1, 1)
+
+                # Compute value function predictions
                 V = self.critic_net(state[index].squeeze(1))
+
+                # Compute advantages
                 delta = Gt_index - V
                 advantage = delta.detach()
-                # epoch iteration, PPO core!!!
+
+                # Update actor network
                 action_prob = self.actor_net(state[index].squeeze(1)).gather(1, action[index])  # new policy
 
+                # Compute action loss
                 ratio = (action_prob / old_action_log_prob[index])
                 surr1 = ratio * advantage
                 surr2 = torch.clamp(ratio, 1 - self.clip_param, 1 + self.clip_param) * advantage
+                action_loss = -torch.min(surr1, surr2).mean()
 
-                # update actor network
-                action_loss = -torch.min(surr1, surr2).mean()  # MAX->MIN desent
-                # self.writer.add_scalar('loss/action_loss', action_loss, global_step=self.training_step)
                 self.actor_optimizer.zero_grad()
                 action_loss.backward()
                 nn.utils.clip_grad_norm_(self.actor_net.parameters(), self.max_grad_norm)
                 self.actor_optimizer.step()
 
-                # update critic network
-                value_loss = F.mse_loss(Gt_index, V)
-                # self.writer.add_scalar('loss/value_loss', value_loss, global_step=self.training_step)
+                # Update critic network
+                value_loss = F.smooth_l1_loss(V, Gt_index)
+
                 self.critic_net_optimizer.zero_grad()
                 value_loss.backward()
                 nn.utils.clip_grad_norm_(self.critic_net.parameters(), self.max_grad_norm)
                 self.critic_net_optimizer.step()
-                self.training_step += 1
 
                 if self.IO:
                     self.writer.add_scalar('loss/policy loss', action_loss.item(), self.training_step)
                     self.writer.add_scalar('loss/critic loss', value_loss.item(), self.training_step)
 
-        # del self.buffer[:]  # clear experience
+                self.training_step += 1
+
         self.clear_buffer()
 
 
@@ -359,7 +358,7 @@ def my_controller(observation, action_space, is_act_continuous=False):
 
     model = PPO()
     load_dir = 'run5'
-    load_model(model, load_dir, 'OMG', episode=300)
+    load_model(model, load_dir, 'OMG', episode=240)
 
     action_ctrl_raw, action_prob = model.select_action(observation['obs']['agent_obs'].flatten(), False)
     action_ctrl = actions_map[action_ctrl_raw]

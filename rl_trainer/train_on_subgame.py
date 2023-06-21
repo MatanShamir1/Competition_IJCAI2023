@@ -30,7 +30,7 @@ from olympics_engine.agent import *
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--game_name', default="running-competition", type=str, help='running-competition/table-hockey/football/wrestling')
+parser.add_argument('--game_name', default="table-hockey", type=str, help='running-competition/table-hockey/football/wrestling')
 parser.add_argument('--algo', default="ppo", type=str, help="ppo/sac")
 parser.add_argument('--max_episodes', default=50000, type=int)
 parser.add_argument('--episode_length', default=20000, type=int)
@@ -41,12 +41,12 @@ parser.add_argument("--save_interval", default=30, type=int)
 parser.add_argument("--model_episode", default=0, type=int)
 
 parser.add_argument("--load_model", action='store_true')
-parser.add_argument("--load_run", default=40, type=int)
-parser.add_argument("--load_episode", default=150, type=int)
+parser.add_argument("--load_run", default=62, type=int)
+parser.add_argument("--load_episode", default=270, type=int)
 
 
 device = 'cuda'
-RENDER = False
+RENDER = True
 actions_map = {0: [-100, -30], 1: [-100, -18], 2: [-100, -6], 3: [-100, 6], 4: [-100, 18], 5: [-100, 30], 6: [-40, -30],
                7: [-40, -18], 8: [-40, -6], 9: [-40, 6], 10: [-40, 18], 11: [-40, 30], 12: [20, -30], 13: [20, -18],
                14: [20, -6], 15: [20, 6], 16: [20, 18], 17: [20, 30], 18: [80, -30], 19: [80, -18], 20: [80, -6],
@@ -118,10 +118,10 @@ def main(args):
         model = PPO(run_dir)
     Transition = namedtuple('Transition', ['state', 'action', 'a_log_prob', 'reward', 'next_state', 'done'])
 
-    # opponent_agent = random_agent()     #we use random opponent agent here
-    opp_model = PPO()
-    load_dir = os.path.join(os.path.dirname(run_dir), "run" + str(args.load_run))
-    opp_model.load(load_dir, episode=args.load_episode)
+    opponent_agent = random_agent()     #we use random opponent agent here
+    # opp_model = PPO()
+    # load_dir = os.path.join(os.path.dirname(run_dir), "run" + str(args.load_run))
+    # opp_model.load(load_dir, episode=args.load_episode)
 
     episode = args.model_episode
     train_count = 0
@@ -142,10 +142,10 @@ def main(args):
         Gt = 0
 
         while True:
-            # action_opponent = opponent_agent.act(obs_oppo_agent)        #opponent action
-            #action_opponent = [0, 0]  #here we assume the opponent is not moving in the demo
-            action_opp_raw, action_opp_prob = opp_model.select_action(obs_oppo_agent, False)
-            action_opponent = actions_map[action_opp_raw]
+            action_opponent = opponent_agent.act(obs_oppo_agent)        #opponent action
+            # action_opponent = [0, 0]  #here we assume the opponent is not moving in the demo
+            # action_opp_raw, action_opp_prob = opp_model.select_action(obs_oppo_agent, False)
+            # action_opponent = actions_map[action_opp_raw]
 
             action_ctrl_raw, action_prob = model.select_action(obs_ctrl_agent, True)
             #inference
@@ -168,7 +168,7 @@ def main(args):
                     post_reward = [0, 0]
                 else:
                     if reward[0] != reward[1]:
-                        post_reward = [reward[0] - 10 + (9 * float(step)) / (float(env.max_step)), reward[1]] if reward[0] < reward[1] else [reward[0] + 9 - (9 * float(step)) / (float(env.max_step) * 2), reward[1] - 1]
+                        post_reward = [reward[0] - 10 + (float(9 * step) / float(env.max_step)), reward[1]] if reward[0] < reward[1] else [reward[0] + 9 - (9 * float(step)) / (float(env.max_step) * 2), reward[1] - 1]
                     else:
                         post_reward = [-1, 0]
             elif args.game_name == 'wrestling':
@@ -177,6 +177,14 @@ def main(args):
                 else:
                     if reward[0] != reward[1]:
                         post_reward = [reward[0] - 10 + (9 * float(step)) / (float(env.max_step)), reward[1]] if reward[0] < reward[1] else [reward[0] + 9 - (9 * float(step)) / (float(env.max_step) * 3), reward[1] - 1]
+                    else:
+                        post_reward = [-1, 0]
+            elif args.game_name == 'table-hockey':
+                if not done:
+                    post_reward = [0, 0]
+                else:
+                    if reward[0] != reward[1]:
+                        post_reward = [reward[0] - 10 + (float(9 * step) / float(env.max_step)), reward[1]] if reward[0] < reward[1] else [reward[0] + 9 - (9 * float(step)) / (float(env.max_step) * 2), reward[1] - 1]
                     else:
                         post_reward = [-1, 0]
 
@@ -217,10 +225,10 @@ def main(args):
         #if episode % args.save_interval == 0 and not args.load_model:
         if episode % args.save_interval == 0:
             model.save(run_dir, episode)
-            if (sum(record_win) / len(record_win)) >= 0.6:
-                opp_model = PPO()
-                load_dir = os.path.join(os.path.dirname(run_dir), "run" + str(41))
-                opp_model.load(load_dir, episode=episode)
+            # if (sum(record_win) / len(record_win)) >= 0.4:
+            #     opp_model = PPO()
+            #     load_dir = os.path.join(os.path.dirname(run_dir), "run" + str(62))
+            #     opp_model.load(load_dir, episode=episode)
 
 
 if __name__ == '__main__':
