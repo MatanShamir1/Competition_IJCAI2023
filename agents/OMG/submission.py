@@ -357,20 +357,18 @@ actions_map = {0: [-100, -30], 1: [-100, -18], 2: [-100, -6], 3: [-100, 6], 4: [
 def my_controller(observation, action_space, is_act_continuous=False):
 
     model = PPO()
-    load_dir = 'run5'
-    load_model(model, load_dir, 'OMG', episode=240)
+    load_model(model, episode=240)
 
     action_ctrl_raw, action_prob = model.select_action(observation['obs']['agent_obs'].flatten(), False)
     action_ctrl = actions_map[action_ctrl_raw]
     return [[action] for action in action_ctrl]
 
 
-def load_model(model, run_dir, agent, episode):
+def load_model(model, episode):
     print(f'\nBegin to load model: ')
-    print("run_dir: ", run_dir)
     base_path = os.path.dirname(os.path.dirname(__file__))
     print("base_path: ", base_path)
-    model_actor_path = os.path.join("actor_" + str(episode) + ".pth")
+    model_actor_path = os.path.join(base_path, "actor_" + str(episode) + ".pth")
     model_critic_path = os.path.join(base_path, "critic_" + str(episode) + ".pth")
     print(f'Actor path: {model_actor_path}')
     print(f'Critic path: {model_critic_path}')
